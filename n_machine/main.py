@@ -54,7 +54,7 @@ hash_list = []
 # return stats from which subreddits the relevant comments were and how many per subreddits
 stats_dict = {}
 
-pronouns_path = "/Users/chartman/Documents/GitHub/pronounlist/Pronouns"
+pronouns_path = os.path.expanduser("~/Documents/GitHub/pronounlist/Pronouns")
 pronouns = list()
 for root, dirs, files in os.walk(pronouns_path):
 	for file in files:
