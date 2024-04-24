@@ -193,7 +193,8 @@ def relevant(comment: dict, args: argparse.Namespace, subs) -> bool:
     if comment['subreddit'] not in subs: 
         return False
     
-    filtered, reason = filter(comment, args.popularity) if not args.dont_filter else False, None
+    filtered, second_return = filter(comment, args.popularity) if not args.dont_filter else False, None
+    filtered = filtered[0]
     if filtered:
         return False
 
@@ -201,18 +202,18 @@ def relevant(comment: dict, args: argparse.Namespace, subs) -> bool:
         return True
     else:
         search = re.search(combined_negative_regex, comment['author_flair_text']) if args.case_sensitive else re.search(combined_negative_regex, comment['author_flair_text'], re.IGNORECASE)
-        return True if not search else False
+        if search:
+             return False
+        else:
+             return True
+        #return True if not search else False
 
 
-def write_csv_headers(outfile_path: str, reviewfile_path: TextIO):
+def write_csv_headers(outfile_path: str):
     """Write the headers for both the results file and the file for filtered-out hits."""
-    with open(outfile_path, 'a', encoding='utf-8') as outf, open(reviewfile_path, "a", encoding='utf-8') as reviewf:
+    with open(outfile_path, 'a', encoding='utf-8') as outf:
         headers = ['text', 'span', 'subreddit', 'score', 'user', 'flairtext', 'date', 'permalink']
         csvwriter = csv.writer(outf, delimiter=";", quotechar='"', quoting=csv.QUOTE_MINIMAL)
-        csvwriter.writerow(headers)
-
-        headers.append('filter reason')
-        csvwriter = csv.writer(reviewf, delimiter=";", quotechar='"', quoting=csv.QUOTE_MINIMAL)
         csvwriter.writerow(headers)
 
 
@@ -502,7 +503,7 @@ def get_data_file(path: str) -> str:
     exit()
 
 
-def process_month(month, args, outfile, reviewfile):
+def process_month(month, args, outfile):
     log_month(month)
 
     infile = args.input + "/" + month
@@ -514,7 +515,6 @@ def process_month(month, args, outfile, reviewfile):
         reservoir[sub]['K'] = generate_k(sub, year, month, declarers)
 
     month_subs = [sub for sub in subs if reservoir[sub]['K'] > 0]
-    print(month_subs)
 
     for comment in read_redditfile(infile):
         if relevant(comment, args, month_subs):
@@ -554,26 +554,12 @@ def main():
     logging.info(f"Searching from {timeframe[0]} to {timeframe[-1]}")
 
     # Writing the CSV headers
-    if not args.count:
-        for month in timeframe:
-            outfile = assemble_outfile_name(args, month)
-            outfile = os.path.join(args.output, outfile)
-            reviewfile = outfile[:-4] + "_filtered-out_matches.csv" if not args.return_all else outfile[:-4] + "_filtered-out_matches.jsonl"
-            reviewfile = os.path.join(args.output, reviewfile)
-            if not args.return_all:
-                write_csv_headers(outfile, reviewfile)
-            process_month(month, args, outfile, reviewfile)
-    elif args.count:
-        total_count = 0
-        for month in timeframe:
-            count = process_month(month, args, outfile=None, reviewfile=None)
-            logging.info(f"{count} instances for {month}")
-            total_count += count
-            if args.output:
-                stats_file = os.path.join(args.output, f'otacon_search_stats_{month}.txt')
-                with open(stats_file, "w") as outfile:
-                    _=outfile.write(json.dumps(stats_dict))
-        logging.info(f"{total_count} total instances")
+    for month in timeframe:
+        outfile = assemble_outfile_name(args, month)
+        outfile = os.path.join(args.output, outfile)
+        if not args.return_all:
+            write_csv_headers(outfile)
+        process_month(month, args, outfile)
     
 
 
