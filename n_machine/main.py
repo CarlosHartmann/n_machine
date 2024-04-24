@@ -83,7 +83,7 @@ combined_regexes = '|'.join([pronouns_regex, free_pronoun_regex, noanyall_regex]
 combined_negative_regex = f'(?:({combined_regexes}))'
 
 # comparison data
-path = "/Users/chartman/Documents/GitHub/otacon/output/pronoun_declarers/01_unify_data/pronoun_declarers.pkl"
+path = "./assets/pronoun_declarers.pkl"
 with open(path, "rb") as infile:
     declarers = pickle.load(infile)
 
