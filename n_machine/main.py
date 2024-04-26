@@ -94,8 +94,9 @@ subs = ['asktransgender', 'languagelearning', 'traaaaaaannnnnnnnnns', 'ftm', 'tr
 monthly_results = dict()
 
 def reset_reservoir_and_results():
-    'returns an empty reservoir for the subs we are interested in'
+    'returns an empty reservoir and per-sub results for the subs we are interested in'
     reservoir = dict()
+    monthly_results = dict()
     for sub in subs:
         monthly_results.setdefault(sub, [])
         reservoir.setdefault(sub, {'N':0, 'K':0})
