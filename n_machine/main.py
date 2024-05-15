@@ -195,7 +195,7 @@ def relevant(comment: dict, args: argparse.Namespace, subs) -> bool:
     if comment['subreddit'] not in subs: 
         return False
     
-    filtered, second_return = filter(comment, args.popularity) if not args.dont_filter else False, None
+    filtered, _ = filter(comment, args.popularity) if not args.dont_filter else False, None
     filtered = filtered[0]
     if filtered:
         return False
@@ -204,11 +204,7 @@ def relevant(comment: dict, args: argparse.Namespace, subs) -> bool:
         return True
     else:
         search = re.search(combined_negative_regex, comment['author_flair_text']) if args.case_sensitive else re.search(combined_negative_regex, comment['author_flair_text'], re.IGNORECASE)
-        if search:
-             return False
-        else:
-             return True
-        #return True if not search else False
+        return True if not search else False
 
 
 def write_csv_headers(outfile_path: str):
@@ -311,7 +307,7 @@ def establish_timeframe(time_from: tuple, time_to: tuple, input_dir: str) -> lis
     """Return all months of the data within a timeframe as list of directories."""
     months = [elem for elem in os.listdir(input_dir) if elem.startswith("RC") or elem.startswith("RS")] # all available months in the input directory
 
-    return sorted([month for month in months if within_timeframe(month, time_from, time_to)], reverse=True)
+    return sorted([month for month in months if within_timeframe(month, time_from, time_to)], reverse=False)
 
 
 def valid_date(string) -> tuple:
@@ -512,31 +508,49 @@ def process_month(month, args, outfile):
 
     month, year = parse_month(month)
     
-    monthly_results, reservoir = reset_reservoir_and_results()
-    for sub in subs:
-        reservoir[sub]['K'] = generate_k(sub, year, month, declarers)
 
-    month_subs = [sub for sub in subs if reservoir[sub]['K'] > 0]
+    if not args.count:
+        monthly_results, reservoir = reset_reservoir_and_results()
+        for sub in subs:
+            reservoir[sub]['K'] = generate_k(sub, year, month, declarers)
 
-    for comment in read_redditfile(infile):
-        if relevant(comment, args, month_subs):
-            sub = comment['subreddit']
-            k = reservoir[sub]['K']
-            reservoir[sub]['N'] += 1
-            n = reservoir[sub]['N']
+        month_subs = [sub for sub in subs if reservoir[sub]['K'] > 0]
 
-            if len(monthly_results[sub]) < k:
-                monthly_results[sub].append(comment)
-            else:
-                s = int(random.random() * n)
-                if s < k:
-                    monthly_results[sub][s] = comment
+        for comment in read_redditfile(infile):
+            if relevant(comment, args, month_subs):
+                sub = comment['subreddit']
+                k = reservoir[sub]['K']
+                reservoir[sub]['N'] += 1
+                n = reservoir[sub]['N']
+
+                if len(monthly_results[sub]) < k:
+                    monthly_results[sub].append(comment)
+                else:
+                    s = int(random.random() * n)
+                    if s < k:
+                        monthly_results[sub][s] = comment
+    
+    elif args.count:
+        monthly_counts = {sub: 0 for sub in subs}
+
+        for comment in read_redditfile(infile):
+            if relevant(comment, args, subs):
+                 sub = comment['subreddit']
+                 monthly_counts[sub] += 1
+
+    if args.count:
+         outfile = re.sub('\.csv', '', outfile)
+         outfile = f'{outfile}.jsonl'
 
     with open(outfile, "a", encoding="utf-8") as outf:
+        if not args.count:
+            for sub in list(monthly_results.keys()):
+                for comment in monthly_results[sub]:
+                    extract(args, comment, args.commentregex, args.include_quoted, outf)
         
-        for sub in list(monthly_results.keys()):
-            for comment in monthly_results[sub]:
-                extract(args, comment, args.commentregex, args.include_quoted, outf)
+        elif args.count:
+             data = json.dumps(monthly_counts)
+             _=outf.write(data)
 
 
 def fetch_model(lang):
