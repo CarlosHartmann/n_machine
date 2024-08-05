@@ -66,14 +66,11 @@ combined_negative_regex = f'(?:({combined_regexes}))'
 
 # comparison data
 path = "./assets/pronoun_declarers.pkl"
-with open(path, "rb") as infile:
-    declarers = pickle.load(infile)
+declarers = pd.read_pickle(path)
 
 
 # Results data
 subs = declarers['subreddit'].unique().tolist()
-
-monthly_results = dict()
 
 def reset_reservoir_and_results():
     'returns an empty reservoir and per-sub results for the subs we are interested in'
@@ -107,7 +104,7 @@ def inside_quote(text: str, span: tuple) -> bool:
     return True if re.search('&gt;[^\n]+$', relevant_text) else False # tests if there is no linebreak between a quote symbol and the match
 
 
-def extract(args, comment: dict, regex: str, include_quoted: bool, outfile: TextIO):
+def extract(args, comment: dict, outfile: TextIO):
     """
     Extract a comment text and all relevant metadata.
     If no regex is supplied, extract the whole comment leaving the span field blank.
@@ -136,16 +133,9 @@ def extract(args, comment: dict, regex: str, include_quoted: bool, outfile: Text
 
         csvwriter = csv.writer(outfile, delimiter=";", quotechar='"', quoting=csv.QUOTE_MINIMAL)
 
-        if regex is None:
-            span = None
-            row = [text, span, subreddit, score, user, flairtext, date, permalink]
-            csvwriter.writerow(row)
-        else:
-            for span in find_all_matches(text, regex):
-                if not include_quoted and not inside_quote(text, span):
-                    span = str(span)
-                    row = [text, span, subreddit, score, user, flairtext, date, permalink]
-                    csvwriter.writerow(row)
+        span = None
+        row = [text, span, subreddit, score, user, flairtext, date, permalink]
+        csvwriter.writerow(row)
 
 
 def filter(comment: dict, popularity_threshold: int) -> tuple:
@@ -510,10 +500,17 @@ def process_month(month, args, outfile):
             monthly_results = list()
             k = ((declarers['year'] == year) & (declarers['month'] == month)).sum()
             n = 0
-
-        
+            month_subs = subs
 
         for comment in read_redditfile(infile):
+
+            if args.baseline_nr == 1:
+                if month_subs == []:
+                    break
+            elif args.baseline_nr == 2:
+                if k == 0:
+                    break     
+
             if relevant(comment, args, month_subs, args.baseline_nr):
                 if args.baseline_nr == 1:
                     sub = comment['subreddit']
@@ -550,9 +547,13 @@ def process_month(month, args, outfile):
 
     with open(outfile, "a", encoding="utf-8") as outf:
         if not args.count:
-            for sub in list(monthly_results.keys()):
-                for comment in monthly_results[sub]:
-                    extract(args, comment, args.commentregex, args.include_quoted, outf)
+            if args.baseline_nr == 1:
+                for sub in list(monthly_results.keys()):
+                    for comment in monthly_results[sub]:
+                        extract(args, comment, outf)
+            elif args.baseline_nr == 2:
+                for comment in monthly_results:
+                    extract(args, comment, outf) 
         
         elif args.count:
              data = json.dumps(monthly_counts)
