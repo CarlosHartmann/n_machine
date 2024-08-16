@@ -27,6 +27,8 @@ import argparse
 from datetime import datetime
 from typing import TextIO
 import pandas as pd
+import langdetect
+from langdetect import detect
 
 from zstandard import ZstdDecompressor
 
@@ -46,6 +48,9 @@ for root, dirs, files in os.walk(pronouns_path):
 				prons = infile.read().split('\n')
 				for elem in prons:
 					pronouns.append(elem)
+
+with open("/Users/chartman/Documents/GitHub/n_machine/output/baseline1b/userlist.pkl", "rb") as infile:
+    userlist = set(pickle.load(infile))
 
 # dedupe
 pronouns = list(set(pronouns))
@@ -178,7 +183,10 @@ def relevant(comment: dict, args: argparse.Namespace, subs, baseline_nr) -> bool
         return True
     else:
         search = re.search(combined_negative_regex, comment['author_flair_text']) if args.case_sensitive else re.search(combined_negative_regex, comment['author_flair_text'], re.IGNORECASE)
-        return True if not search else False
+        if search:
+            return False
+    
+    return True if comment['author'] not in userlist else False
          
 
 

@@ -9,6 +9,7 @@ readme = "README.md"
 python = "^3.11"
 zstandard = "^0.22.0"
 pandas = "^2.2.2"
+langdetect = "^1.0.9"
 
 
 [build-system]
