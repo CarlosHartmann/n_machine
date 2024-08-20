@@ -180,7 +180,7 @@ def relevant(comment: dict, args: argparse.Namespace, subs, baseline_nr) -> bool
         return False
 
     if comment['author_flair_text'] is None:
-        return True
+        pass
     else:
         search = re.search(combined_negative_regex, comment['author_flair_text']) if args.case_sensitive else re.search(combined_negative_regex, comment['author_flair_text'], re.IGNORECASE)
         if search:
