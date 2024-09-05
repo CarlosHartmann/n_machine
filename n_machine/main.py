@@ -49,7 +49,7 @@ for root, dirs, files in os.walk(pronouns_path):
 				for elem in prons:
 					pronouns.append(elem)
 
-with open("/Users/chartman/Documents/GitHub/n_machine/output/baseline1b/userlist.pkl", "rb") as infile:
+with open("./assets/userlist.pkl", "rb") as infile:
     userlist = set(pickle.load(infile))
 
 # dedupe
