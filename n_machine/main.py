@@ -289,9 +289,8 @@ def fetch_data_timeframe(input_dir: str) -> tuple:
 def establish_timeframe(time_from: tuple, time_to: tuple, input_dir: str, reverse_order: bool) -> list:
     """Return all months of the data within a timeframe as list of directories."""
     months = [elem for elem in os.listdir(input_dir) if elem.startswith("RC") or elem.startswith("RS")] # all available months in the input directory
-
-	reverse = False if not reverse_order else True
-
+    reverse = False if not reverse_order else True
+    
     return sorted([month for month in months if within_timeframe(month, time_from, time_to)], reverse=reverse)
 
 
