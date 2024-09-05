@@ -49,7 +49,7 @@ for root, dirs, files in os.walk(pronouns_path):
 				for elem in prons:
 					pronouns.append(elem)
 
-with open("~/Documents/GitHub/n_machine/assets/userlist.pkl", "rb") as infile:
+with open(os.path.expanduser("~/Documents/GitHub/n_machine/assets/userlist.pkl"), "rb") as infile:
     userlist = set(pickle.load(infile))
 
 # dedupe
@@ -70,7 +70,7 @@ combined_regexes = '|'.join([pronouns_regex, free_pronoun_regex, noanyall_regex]
 combined_negative_regex = f'(?:({combined_regexes}))'
 
 # comparison data
-path = "~/Documents/GitHub/n_machine/assets/pronoun_declarers.pkl"
+path = os.path.expanduser("~/Documents/GitHub/n_machine/assets/pronoun_declarers.pkl")
 declarers = pd.read_pickle(path)
 
 
