@@ -286,11 +286,13 @@ def fetch_data_timeframe(input_dir: str) -> tuple:
     return months[0], months[-1]
 
 
-def establish_timeframe(time_from: tuple, time_to: tuple, input_dir: str) -> list:
+def establish_timeframe(time_from: tuple, time_to: tuple, input_dir: str, reverse_order: bool) -> list:
     """Return all months of the data within a timeframe as list of directories."""
     months = [elem for elem in os.listdir(input_dir) if elem.startswith("RC") or elem.startswith("RS")] # all available months in the input directory
 
-    return sorted([month for month in months if within_timeframe(month, time_from, time_to)], reverse=False)
+	reverse = False if not reverse_order else True
+
+    return sorted([month for month in months if within_timeframe(month, time_from, time_to)], reverse=reverse)
 
 
 def valid_date(string) -> tuple:
@@ -428,6 +430,8 @@ def define_parser() -> argparse.ArgumentParser:
                         help="Skip any filtering.")
     parser.add_argument('--baseline_nr', type=int, required=True,
                         help="What kind of baseline is wanted, 1 or 2.")
+    parser.add_argument('--reverse_order', action='store_true', required=False,
+                        help="Process months from latest to earliest.")                    
 
     return parser
 
@@ -581,7 +585,7 @@ def fetch_model(lang):
 def main():
     logging.basicConfig(level=logging.NOTSET, format='INFO: %(message)s')
     args = handle_args()
-    timeframe = establish_timeframe(args.time_from, args.time_to, args.input)
+    timeframe = establish_timeframe(args.time_from, args.time_to, args.input, args.reverse_order)
     logging.info(f"Establishing baseline for each month from {timeframe[0]} to {timeframe[-1]}")
 
     # Writing the CSV headers
