@@ -507,6 +507,7 @@ def process_month(month, args, outfile):
         elif args.baseline_nr == 2:
             monthly_results = list()
             k = ((declarers['year'] == year) & (declarers['month'] == month)).sum()
+            k = 2*k # to have more than enough
             n = 0
             month_subs = subs
 
@@ -537,6 +538,7 @@ def process_month(month, args, outfile):
                     if len(monthly_results) < k:
                         monthly_results.append(comment)
                     else:
+                        n += 1
                         s = int(random.random() * n)
                         if s < k:
                             monthly_results[s] = comment
